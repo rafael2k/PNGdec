@@ -86,7 +86,7 @@ int PNG_openRAM(PNGIMAGE *pPNG, uint8_t *pData, int iDataSize)
     return PNGInit(pPNG);
 } /* PNG_openRAM() */
 
-#ifdef __LINUX__
+#if defined( __LINUX__ ) || defined( __ELKS__ )
 int PNG_openFile(PNGIMAGE *pPNG, const char *szFilename)
 {
     pPNG->iError = PNG_SUCCESS;
