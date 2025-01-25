@@ -21,7 +21,7 @@
 //
 #ifndef __PNGDEC__
 #define __PNGDEC__
-#if defined( __MACH__ ) || defined( __LINUX__ ) || defined( __MCUXPRESSO )
+#if defined( __MACH__ ) || defined( __LINUX__ ) || defined( __MCUXPRESSO ) || defined( __ELKS__ )
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
@@ -147,7 +147,7 @@ typedef struct png_image_tag
     PNG_DRAW_CALLBACK *pfnDraw;
     PNG_CLOSE_CALLBACK *pfnClose;
     PNGFILE PNGFile;
-    uint8_t ucZLIB[32768 + sizeof(struct inflate_state)]; // put this here to avoid needing malloc/free
+    uint8_t *ucZLIB;
     uint8_t ucPalette[1024];
     uint8_t ucPixels[PNG_MAX_BUFFERED_PIXELS * 2];
     uint8_t ucFileBuf[PNG_FILE_BUF_SIZE]; // holds temp file data
@@ -203,6 +203,7 @@ int PNG_isInterlaced(PNGIMAGE *pPNG);
 uint8_t *PNG_getBuffer(PNGIMAGE *pPNG);
 void PNG_setBuffer(PNGIMAGE *pPNG, uint8_t *pBuffer);
 void PNGRGB565(PNGDRAW *pDraw, uint16_t *pPixels, int iEndiannes, uint32_t u32Bkgd, int iHasAlpha);
+int DecodePNG(PNGIMAGE *pPage, void *pUser, int iOptions);
 #endif // __cplusplus
 
 // Due to unaligned memory causing an exception, we have to do these macros the slow way

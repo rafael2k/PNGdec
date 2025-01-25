@@ -26,6 +26,11 @@ PNG_STATIC int PNGInit(PNGIMAGE *pPNG);
 PNG_STATIC int DecodePNG(PNGIMAGE *pImage, void *pUser, int iOptions);
 PNG_STATIC uint8_t PNGMakeMask(PNGDRAW *pDraw, uint8_t *pMask, uint8_t ucThreshold);
 
+inline uint16_t __builtin_bswap16( uint16_t val )
+{
+    return (val << 8) | ((val >> 8) & 0xFF);
+}
+
 #include "zlib.h"
 //
 // Convert 8-bit grayscale into RGB565
@@ -75,6 +80,7 @@ int PNG_openRAM(PNGIMAGE *pPNG, uint8_t *pData, int iDataSize)
     pPNG->pfnDraw = NULL;
     pPNG->pfnOpen = NULL;
     pPNG->pfnClose = NULL;
+	pPNG->PNGFile.fHandle = NULL;
     pPNG->PNGFile.iSize = iDataSize;
     pPNG->PNGFile.pData = pData;
     return PNGInit(pPNG);
@@ -100,8 +106,12 @@ int PNG_openFile(PNGIMAGE *pPNG, const char *szFilename)
 #endif // __LINUX__
 void PNG_close(PNGIMAGE *pPNG)
 {
-    if (pPNG->pfnClose)
-        (*pPNG->pfnClose)(pPNG->PNGFile.fHandle);
+	if(pPNG->PNGFile.fHandle)
+		fclose(pPNG->PNGFile.fHandle);
+
+	free(pPNG->ucZLIB);
+	//if (pPNG->pfnClose)
+      //  (*pPNG->pfnClose)(pPNG->PNGFile.fHandle);
 } /* PNG_close() */
 
 int PNG_getWidth(PNGIMAGE *pPNG)
@@ -523,11 +533,11 @@ PNG_STATIC int PNGParseInfo(PNGIMAGE *pPage)
         return pPage->iError;
     }
 
-    if (MOTOLONG(s) != (int32_t)0x89504e47) { // check that it's a PNG file
+    if (MOTOLONG(s) != 0x89504e47UL) { // check that it's a PNG file
         pPage->iError = PNG_INVALID_FILE;
         return pPage->iError;
     }
-    if (MOTOLONG(&s[12]) == 0x49484452/*'IHDR'*/) {
+    if (MOTOLONG(&s[12]) == 0x49484452UL/*'IHDR'*/) {
         pPage->iWidth = MOTOLONG(&s[16]);
         pPage->iHeight = MOTOLONG(&s[20]);
         pPage->ucBpp = s[24]; // bits per pixel
@@ -663,6 +673,8 @@ PNG_STATIC void DeFilter(uint8_t *pCurr, uint8_t *pPrev, int iWidth, int iPitch)
 //
 PNG_STATIC int PNGInit(PNGIMAGE *pPNG)
 {
+	pPNG->ucZLIB = malloc(32768 + sizeof(struct inflate_state)); // put this here to avoid needing malloc/free
+
     return PNGParseInfo(pPNG); // gather info for image
 } /* PNGInit() */
 //

@@ -95,7 +95,7 @@ uint8_t ucTemp[1024];
 void PNGDraw(PNGDRAW *pDraw)
 {
     uint16_t usPixels[320];
-	PNGRGB565(pDraw, usPixels, PNG_RGB565_LITTLE_ENDIAN, 0xffffffff, PNG_hasAlpha(&png));
+	PNGRGB565(pDraw, usPixels, PNG_RGB565_LITTLE_ENDIAN, 0xffffffff, png.iHasAlpha);
 }
 int main(int argc, const char * argv[]) {
     int i, rc;
@@ -124,12 +124,12 @@ int main(int argc, const char * argv[]) {
 //    for (int j=0; j<10000; j++) {
 	rc = PNG_openRAM(&png, pData, iDataSize); //PNGDraw);
     if (rc == PNG_SUCCESS) {
-        printf("image specs: (%d x %d), %d bpp, pixel type: %d\n", PNG_getWidth(&png), PNG_getHeight(&png), PNG_getBpp(&png), PNG_getPixelType(&png));
-        PNG_setBuffer(&png, (uint8_t *)malloc(PNG_getBufferSize(&png)));
-        rc = PNG_decode(&png, NULL, 0); //PNG_CHECK_CRC);
+        printf("image specs: (%d x %d), %d bpp, pixel type: %d\n", PNG_getWidth(&png), PNG_getHeight(&png), png.ucBpp, png.ucPixelType);
+        png.pImage = (uint8_t *)malloc(PNG_getBufferSize(&png));
+        rc = DecodePNG(&png, NULL, 0); //PNG_CHECK_CRC);
         i = 1;
         pPalette = NULL;
-        switch (PNG_getPixelType(&png)) {
+        switch (png.ucPixelType) {
             case PNG_PIXEL_INDEXED:
                 pPalette = PNG_getPalette(&png);
                 i = 1;
@@ -141,7 +141,7 @@ int main(int argc, const char * argv[]) {
                 i = 4;
                 break;
         }
-        SaveBMP((char *)argv[2], PNG_getBuffer(&png), pPalette, PNG_getWidth(&png), PNG_getHeight(&png), i*PNG_getBpp(&png));
+        SaveBMP((char *)argv[2], PNG_getBuffer(&png), pPalette, PNG_getWidth(&png), PNG_getHeight(&png), i*png.ucBpp);
         PNG_close(&png);
         free(PNG_getBuffer(&png));
 //    } // for j
